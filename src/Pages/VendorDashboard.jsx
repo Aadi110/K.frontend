@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 
 const VendorDashboard = () => {
-  const API_BASE = import.meta.env.VITE_API_URL || \"\";
+  const API_BASE = import.meta.env.VITE_API_URL || "";
   const navigate = useNavigate();
   const { marketCrops } = useMarketplace();
 

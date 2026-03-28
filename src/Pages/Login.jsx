@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Lock, User, CheckCircle2 } from "lucide-react";
 
 const Login = () => {
-  const API_BASE = import.meta.env.VITE_API_URL || \"\";
+  const API_BASE = import.meta.env.VITE_API_URL || "";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);

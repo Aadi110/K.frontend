@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const Register = () => {
-  const API_BASE = import.meta.env.VITE_API_URL || \"\";
+  const API_BASE = import.meta.env.VITE_API_URL || "";
   const [formData, setFormData] = useState({ fullname: "", email: "", password: "", role: "farmer" });
   const [msg, setMsg] = useState("");
   const navigate = useNavigate();
