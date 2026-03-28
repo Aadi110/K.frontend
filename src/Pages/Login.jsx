@@ -82,6 +82,7 @@ const Login = () => {
               <input
                 type="email"
                 placeholder="you@example.com"
+                autoComplete="username"
                 className="w-full pl-14 pr-6 py-4 bg-gray-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-green-500/20 font-bold transition-all text-sm"
                 onChange={(e) => setEmail(e.target.value)}
                 required
