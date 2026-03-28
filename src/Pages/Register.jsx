@@ -35,8 +35,8 @@ const Register = () => {
         </div>
         <form onSubmit={handleSignup} className="space-y-4">
           <input type="text" placeholder="Full Name" className="w-full p-4 bg-gray-50 rounded-xl outline-none" onChange={e => setFormData({...formData, fullname: e.target.value})} />
-          <input type="email" placeholder="Email" className="w-full p-4 bg-gray-50 rounded-xl outline-none" onChange={e => setFormData({...formData, email: e.target.value})} />
-          <input type="password" placeholder="Password" className="w-full p-4 bg-gray-50 rounded-xl outline-none" onChange={e => setFormData({...formData, password: e.target.value})} />
+          <input type="email" placeholder="Email" autoComplete="email" className="w-full p-4 bg-gray-50 rounded-xl outline-none" onChange={e => setFormData({...formData, email: e.target.value})} />
+          <input type="password" placeholder="Password" autoComplete="new-password" className="w-full p-4 bg-gray-50 rounded-xl outline-none" onChange={e => setFormData({...formData, password: e.target.value})} />
           <button className="w-full py-4 bg-[#39E71F] font-black rounded-xl">Create Account</button>
         </form>
         <p className="text-center mt-6 text-sm text-gray-400 font-bold">

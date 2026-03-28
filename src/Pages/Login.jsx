@@ -97,6 +97,7 @@ const Login = () => {
               <input 
                 type="password" 
                 placeholder="••••••••" 
+                autoComplete="current-password"
                 className="w-full pl-14 pr-6 py-4 bg-gray-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-green-500/20 font-bold transition-all text-sm" 
                 onChange={e => setPassword(e.target.value)} 
                 required
