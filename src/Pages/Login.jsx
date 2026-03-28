@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Lock, User, CheckCircle2 } from "lucide-react";
 
 const Login = () => {
+  const API_BASE = import.meta.env.VITE_API_URL || \"\";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
@@ -22,7 +23,7 @@ const Login = () => {
     e.preventDefault();
 
     try {
-      const res = await fetch("/api/accounts/login/", {
+      const res = await fetch(`${API_BASE}/api/accounts/login/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -37,7 +38,7 @@ const Login = () => {
         localStorage.setItem("isLoggedIn", "true");
         
         // If Remember Me is unchecked, you could technically use sessionStorage, 
-        // but for this flow, we'll use localStorage to keep it persistent as requested.
+        // but for this flow, we`ll use localStorage to keep it persistent as requested.
         
         navigate(data.role === "farmer" ? "/farmer-dashboard" : "/vendor-dashboard");
       } else {

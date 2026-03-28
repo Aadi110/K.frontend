@@ -2,13 +2,14 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const Register = () => {
+  const API_BASE = import.meta.env.VITE_API_URL || \"\";
   const [formData, setFormData] = useState({ fullname: "", email: "", password: "", role: "farmer" });
   const [msg, setMsg] = useState("");
   const navigate = useNavigate();
 
   const handleSignup = async (e) => {
     e.preventDefault();
-    const res = await fetch("/api/accounts/signup/", {
+    const res = await fetch(`${API_BASE}/api/accounts/signup/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(formData),
@@ -25,7 +26,7 @@ const Register = () => {
         <h2 className="text-2xl font-black mb-4">Register</h2>
         {msg && <p className="text-green-500 text-xs font-bold mb-4">{msg}</p>}
         <div className="flex gap-2 mb-4">
-          {['farmer', 'vendor'].map(r => (
+          {[`farmer', 'vendor'].map(r => (
             <button key={r} onClick={() => setFormData({...formData, role: r})} 
               className={`flex-1 py-2 rounded-xl text-[10px] font-bold uppercase border-2 ${formData.role === r ? 'border-green-500 bg-green-50' : 'border-gray-100'}`}>
               {r}

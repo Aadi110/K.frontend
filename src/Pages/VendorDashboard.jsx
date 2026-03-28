@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 
 const VendorDashboard = () => {
+  const API_BASE = import.meta.env.VITE_API_URL || \"\";
   const navigate = useNavigate();
   const { marketCrops } = useMarketplace();
 
@@ -36,10 +37,10 @@ const VendorDashboard = () => {
 
   // --- FETCHING DATA ---
   const fetchData = () => {
-    fetch(`/api/vendor-orders?vendor=${encodeURIComponent(vendorName)}`)
+    fetch(`${API_BASE}/api/vendor-orders?vendor=${encodeURIComponent(vendorName)}`)
       .then(res => res.json())
       .then(data => setMyOrders(data))
-      .catch(err => console.error("Error fetching orders:", err));
+      .catch(err => console.error(`Error fetching orders:", err));
   };
 
   useEffect(() => {
@@ -54,7 +55,7 @@ const VendorDashboard = () => {
     )
     .sort((a, b) => {
       if (sortBy === "low") {
-        const priceA = parseFloat(a.price.replace(/[^0-9.-]/g, ''));
+        const priceA = parseFloat(a.price.replace(/[^0-9.-]/g, `'));
         const priceB = parseFloat(b.price.replace(/[^0-9.-]/g, ''));
         return priceA - priceB;
       }
@@ -101,8 +102,8 @@ const VendorDashboard = () => {
     };
 
     try {
-      const res = await fetch('/api/create-order', {
-        method: "POST",
+      const res = await fetch(`${API_BASE}/api/create-order`, {
+        method: `POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newOrder)
       });
@@ -123,8 +124,8 @@ const VendorDashboard = () => {
   const handlePostRequest = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch('/api/manage-requests', {
-        method: "POST",
+      const res = await fetch(`${API_BASE}/api/manage-requests`, {
+        method: `POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...requestData, vendor_name: vendorName })
       });

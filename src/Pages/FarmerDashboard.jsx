@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 
 const FarmerDashboard = () => {
+  const API_BASE = import.meta.env.VITE_API_URL || \"\";
   const navigate = useNavigate();
   const { marketCrops, addProduct, deleteProduct, getFarmerProducts } = useMarketplace();
   
@@ -39,19 +40,19 @@ const FarmerDashboard = () => {
   // --- FETCHING DATA ---
   const fetchData = async () => {
     try {
-      const prodRes = await fetch(`/api/my-products?farmer=${encodeURIComponent(userName)}`);
+      const prodRes = await fetch(`${API_BASE}/api/my-products?farmer=${encodeURIComponent(userName)}`);
       const prodData = await prodRes.json();
       setMyProducts(prodData);
 
-      const orderRes = await fetch(`/api/farmer-orders?farmer=${encodeURIComponent(userName)}`);
+      const orderRes = await fetch(`${API_BASE}/api/farmer-orders?farmer=${encodeURIComponent(userName)}`);
       const orderData = await orderRes.json();
       setIncomingOrders(orderData);
 
-      const reqRes = await fetch('/api/manage-requests');
+      const reqRes = await fetch(`${API_BASE}/api/manage-requests`);
       const reqData = await reqRes.json();
       setVendorRequests(reqData);
     } catch (err) {
-      console.error("Data Fetch Error:", err);
+      console.error(`Data Fetch Error:", err);
     }
   };
 
@@ -71,8 +72,8 @@ const FarmerDashboard = () => {
   // --- MARK SHIPPED LOGIC ---
   const handleMarkShipped = async (orderId) => {
     try {
-      const res = await fetch('/api/update-order-status', {
-        method: "POST",
+      const res = await fetch(`${API_BASE}/api/update-order-status`, {
+        method: `POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ order_id: orderId, status: "Shipped" })
       });
@@ -90,8 +91,8 @@ const FarmerDashboard = () => {
     if (!orderId) return;
     if (!window.confirm("Are you sure you want to delete this order?")) return;
     try {
-      const res = await fetch(`/api/delete-order/${orderId}`, {
-        method: "DELETE",
+      const res = await fetch(`${API_BASE}/api/delete-order/${orderId}`, {
+        method: `DELETE",
       });
       if (res.ok) {
         setIncomingOrders(prev => prev.filter(o => (o.id !== orderId && o._id !== orderId)));
@@ -106,7 +107,7 @@ const FarmerDashboard = () => {
 
   // --- CALCULATE EARNINGS ---
   const totalEarnings = incomingOrders
-    .filter(order => order.status === 'Shipped' || order.status === 'Accepted')
+    .filter(order => order.status === `Shipped' || order.status === 'Accepted')
     .reduce((acc, curr) => acc + (Number(curr.price) || 0), 0);
 
   const handleLogout = () => {
@@ -128,8 +129,8 @@ const FarmerDashboard = () => {
     };
 
     try {
-      const res = await fetch('/api/create-order', {
-        method: "POST",
+      const res = await fetch(`${API_BASE}/api/create-order`, {
+        method: `POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(orderData)
       });
@@ -152,8 +153,8 @@ const FarmerDashboard = () => {
     if (!requestId) return;
     if (!window.confirm("Are you sure you want to reject this request?")) return;
     try {
-      const res = await fetch(`/api/delete-request/${requestId}`, {
-        method: "DELETE",
+      const res = await fetch(`${API_BASE}/api/delete-request/${requestId}`, {
+        method: `DELETE",
       });
       if (res.ok) {
         setVendorRequests(prev => prev.filter(r => (r.id !== requestId && r._id !== requestId)));
@@ -180,7 +181,7 @@ const FarmerDashboard = () => {
       
       addProduct(newProduct, userName);
       alert("Product listed successfully!");
-      setFormData({ crop_name: '', category: 'Vegetables', price: '', quantity: '', unit: 'kg' });
+      setFormData({ crop_name: `', category: 'Vegetables', price: '', quantity: '', unit: 'kg' });
       setActiveTab('My Products');
     } catch (err) {
       alert("Error listing product.");
