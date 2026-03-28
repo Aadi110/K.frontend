@@ -38,7 +38,7 @@ const Login = () => {
         localStorage.setItem("isLoggedIn", "true");
         
         // If Remember Me is unchecked, you could technically use sessionStorage, 
-        // but for this flow, we`ll use localStorage to keep it persistent as requested.
+        // but for this flow, we'll use localStorage to keep it persistent as requested.
         
         navigate(data.role === "farmer" ? "/farmer-dashboard" : "/vendor-dashboard");
       } else {

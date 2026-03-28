@@ -40,7 +40,7 @@ const VendorDashboard = () => {
     fetch(`${API_BASE}/api/vendor-orders?vendor=${encodeURIComponent(vendorName)}`)
       .then(res => res.json())
       .then(data => setMyOrders(data))
-      .catch(err => console.error(`Error fetching orders:", err));
+      .catch(err => console.error("Error fetching orders:", err));
   };
 
   useEffect(() => {
@@ -55,7 +55,7 @@ const VendorDashboard = () => {
     )
     .sort((a, b) => {
       if (sortBy === "low") {
-        const priceA = parseFloat(a.price.replace(/[^0-9.-]/g, `'));
+        const priceA = parseFloat(a.price.replace(/[^0-9.-]/g, ''));
         const priceB = parseFloat(b.price.replace(/[^0-9.-]/g, ''));
         return priceA - priceB;
       }
@@ -103,7 +103,7 @@ const VendorDashboard = () => {
 
     try {
       const res = await fetch(`${API_BASE}/api/create-order`, {
-        method: `POST",
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newOrder)
       });
@@ -125,7 +125,7 @@ const VendorDashboard = () => {
     e.preventDefault();
     try {
       const res = await fetch(`${API_BASE}/api/manage-requests`, {
-        method: `POST",
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...requestData, vendor_name: vendorName })
       });
