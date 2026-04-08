@@ -35,6 +35,7 @@ const Login = () => {
         // SAVE SESSION DATA
         localStorage.setItem("userName", data.name);
         localStorage.setItem("userRole", data.role);
+        localStorage.setItem("userAddress", data.address);
         localStorage.setItem("isLoggedIn", "true");
         
         // If Remember Me is unchecked, you could technically use sessionStorage, 

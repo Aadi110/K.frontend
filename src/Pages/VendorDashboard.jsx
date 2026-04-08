@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMarketplace } from '../context/MarketplaceContext';
+import PaymentModal from '../Components/PaymentModal';
 import { 
   LayoutDashboard, Search, ShoppingBag, Heart, 
   MessageSquare, History, Settings, Bell, 
   ShoppingBasket, IndianRupee, Send, User, 
-  ChevronRight, Filter, LogOut 
+  ChevronRight, Filter, LogOut, MapPin 
 } from 'lucide-react';
 
 const VendorDashboard = () => {
@@ -33,6 +34,11 @@ const VendorDashboard = () => {
   const [sortBy, setSortBy] = useState("default"); // 'low', 'high'
   const [savedProducts, setSavedProducts] = useState([]);
   
+  // Payment Logic States
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  
   const vendorName = localStorage.getItem("userName") || "Vendor";
 
   // --- FETCHING DATA ---
@@ -46,6 +52,49 @@ const VendorDashboard = () => {
   useEffect(() => {
     fetchData();
   }, [activeTab, vendorName]);
+
+  // --- ESEWA SUCCESS REDIRECT LOGIC ---
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get("payment_success") === "true") {
+       const payloadStr = urlParams.get("payload");
+       if (payloadStr) {
+           try {
+               const pData = JSON.parse(atob(payloadStr));
+               
+               // Create the Order as automatically Shipped
+               const newOrder = {
+                 vendor_name: vendorName,
+                 crop_name: pData.name,
+                 price: pData.price,
+                 quantity: pData.quantity,
+                 status: "Shipped",
+                 date: new Date().toLocaleDateString(),
+                 farmer_name: pData.farmer
+               };
+               
+               fetch(`${API_BASE}/api/create-order`, {
+                 method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(newOrder)
+               });
+               
+               // Create Verification history internally
+               fetch(`${API_BASE}/api/payment/verify`, {
+                 method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({
+                    farmer_id: pData.farmer, vendor_id: vendorName, crop_name: pData.name, amount: pData.amount, status: "SUCCESS", transaction_uuid: pData.uuid
+                 })
+               });
+               
+               alert(`Payment Successful! Your order for ${pData.name} has been processed and automatically marked as Shipped.`);
+               
+               // Clean up URL
+               window.history.replaceState({}, document.title, window.location.pathname);
+               setActiveTab('My Orders');
+           } catch(e) {
+               console.error("Payload parse error: ", e);
+           }
+       }
+    }
+  }, [vendorName, API_BASE]);
 
   // --- SEARCH & FILTER LOGIC ---
   const filteredAndSortedItems = marketCrops
@@ -84,40 +133,83 @@ const VendorDashboard = () => {
     navigate("/login");
   };
 
-  const handleBuyNow = async (product) => {
+  const handleBuyNow = (product) => {
     const isAuthenticated = localStorage.getItem("isLoggedIn");
     if (isAuthenticated !== "true") {
       navigate("/login");
       return;
     }
+    setSelectedProduct(product);
+    setIsPaymentModalOpen(true);
+  };
 
-    const newOrder = {
-      vendor_name: vendorName,
-      crop_name: product.name,
-      price: product.price,
-      quantity: product.quantity || "1",
-      status: "Processing",
-      date: new Date().toLocaleDateString(),
-      farmer_name: product.farmer_name || "Unknown Farmer"
-    };
-
+  const handleConfirmPayment = async () => {
+    if (!selectedProduct) return;
+    setIsProcessingPayment(true);
+    
     try {
-      const res = await fetch(`${API_BASE}/api/create-order`, {
+      // Parse amount gracefully
+      const rawPrice = selectedProduct.price.toString().replace(/[^0-9.-]/g, '');
+      const amount = parseFloat(rawPrice) || 0;
+      
+      const res = await fetch(`${API_BASE}/api/payment/initiate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newOrder)
+        body: JSON.stringify({ amount })
       });
+      
+      if (!res.ok) throw new Error("Payment initiation failed");
+      const data = await res.json();
 
-      if (res.ok) {
-        setMyOrders(prev => [...prev, newOrder]);
-        alert(`Order placed for ${product.name}! Farmer has been notified.`);
-        setActiveTab('My Orders');
-      } else {
-        alert("Failed to place order. Please try again.");
+      // Bundle product data into the success URL so we can save the order exactly upon successful redirect!
+      const successData = {
+          name: selectedProduct.name,
+          price: selectedProduct.price,
+          quantity: selectedProduct.quantity || "1",
+          farmer: selectedProduct.farmer_name || selectedProduct.farmer || "Farmer",
+          uuid: data.transaction_uuid,
+          amount: amount
+      };
+      
+      const successUrl = new URL(window.location.origin + window.location.pathname);
+      successUrl.searchParams.set("payment_success", "true");
+      successUrl.searchParams.set("payload", btoa(JSON.stringify(successData)));
+
+      // Build eSewa Form (Test Environment)
+      const form = document.createElement("form");
+      form.setAttribute("method", "POST");
+      form.setAttribute("action", "https://rc-epay.esewa.com.np/api/epay/main/v2/form");
+      
+      const params = {
+          "amount": data.amount,
+          "tax_amount": data.tax_amount,
+          "total_amount": data.total_amount,
+          "transaction_uuid": data.transaction_uuid,
+          "product_code": data.product_code,
+          "product_service_charge": data.product_service_charge,
+          "product_delivery_charge": data.product_delivery_charge,
+          "success_url": successUrl.toString(), // Redirects with bundled payment success info
+          "failure_url": window.location.origin,
+          "signed_field_names": data.signed_field_names,
+          "signature": data.signature,
+      };
+      
+      for (const key in params) {
+          const hiddenField = document.createElement("input");
+          hiddenField.setAttribute("type", "hidden");
+          hiddenField.setAttribute("name", key);
+          hiddenField.setAttribute("value", params[key]);
+          form.appendChild(hiddenField);
       }
+      
+      document.body.appendChild(form);
+      form.submit();
+      
     } catch (err) {
-      console.error("Order error:", err);
-      alert("Error placing order. Please try again.");
+      console.error("Payment error:", err);
+      alert("Error initiating payment. Please try again.");
+      setIsProcessingPayment(false);
+      setIsPaymentModalOpen(false);
     }
   };
 
@@ -365,6 +457,16 @@ const VendorDashboard = () => {
 
           </motion.div>
         </AnimatePresence>
+
+        <PaymentModal 
+          isOpen={isPaymentModalOpen} 
+          onClose={() => { setIsPaymentModalOpen(false); setSelectedProduct(null); }} 
+          amount={selectedProduct ? parseFloat(selectedProduct.price.toString().replace(/[^0-9.-]/g, '')) || 0 : 0} 
+          cropName={selectedProduct ? selectedProduct.name : ""} 
+          onConfirmPayment={handleConfirmPayment}
+          isProcessing={isProcessingPayment}
+        />
+
       </main>
     </div>
   );
@@ -384,8 +486,11 @@ const ProductCard = ({ item, onBuy, onFavorite, isSaved }) => (
         </button>
       </div>
       <h3 className="text-xl font-black text-gray-900 mb-1">{item.name}</h3>
-      <div className="flex items-center gap-2 text-gray-400 text-xs font-bold mb-6">
-        <User size={14} className="text-green-500" /> {item.location}
+      <div className="flex items-center gap-2 text-gray-400 text-xs font-bold mb-2">
+        <User size={14} className="text-green-500" /> {item.farmer_name || 'Local Farmer'}
+      </div>
+      <div className="flex items-center gap-2 text-gray-400 text-xs font-bold mb-2">
+        <MapPin size={14} className="text-blue-500" /> {item.farmer_address || item.location || 'Location Unavailable'}
       </div>
       <div className="flex items-center justify-between pt-4 border-t border-gray-50">
         <div>

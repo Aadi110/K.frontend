@@ -6,8 +6,9 @@ import marketplaceDefaultImage from '../assets/marketplace/marketplace-default.s
 import { 
   LayoutDashboard, ShoppingBasket, PlusCircle, 
   ShoppingCart, MessageSquare, IndianRupee, 
-  BarChart3, Settings, Bell, Search, Trash2, Send, LogOut 
+  BarChart3, Settings, Bell, Search, Trash2, Send, LogOut, History 
 } from 'lucide-react';
+import HistoryCard from '../Components/HistoryCard';
 
 const FarmerDashboard = () => {
   const API_BASE = import.meta.env.VITE_API_URL || "";
@@ -28,6 +29,7 @@ const FarmerDashboard = () => {
   const [myProducts, setMyProducts] = useState([]);
   const [incomingOrders, setIncomingOrders] = useState([]);
   const [vendorRequests, setVendorRequests] = useState([]);
+  const [transactions, setTransactions] = useState([]);
   const [formData, setFormData] = useState({
     crop_name: '', category: 'Vegetables', price: '', quantity: '', unit: 'kg'
   });
@@ -51,6 +53,12 @@ const FarmerDashboard = () => {
       const reqRes = await fetch(`${API_BASE}/api/manage-requests`);
       const reqData = await reqRes.json();
       setVendorRequests(reqData);
+
+      const transRes = await fetch(`${API_BASE}/api/transactions/farmer?farmer=${encodeURIComponent(userName)}`);
+      if (transRes.ok) {
+        const transData = await transRes.json();
+        setTransactions(transData);
+      }
     } catch (err) {
       console.error("Data Fetch Error:", err);
     }
@@ -176,7 +184,8 @@ const FarmerDashboard = () => {
         location: "Local Market",
         image: marketplaceDefaultImage,
         category: formData.category,
-        description: `${formData.quantity} ${formData.unit} of fresh ${formData.crop_name}`
+        description: `${formData.quantity} ${formData.unit} of fresh ${formData.crop_name}`,
+        farmer_address: localStorage.getItem("userAddress") || "Location Unavailable"
       };
       
       addProduct(newProduct, userName);
@@ -314,7 +323,8 @@ const FarmerDashboard = () => {
             )}
 
             {activeTab === 'Incoming Orders' && (
-              <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden">
+              <div className="flex flex-col gap-8 w-full">
+                <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden">
                 <table className="w-full text-left">
                   <thead className="bg-gray-50 text-[10px] font-black text-gray-400 uppercase tracking-widest">
                     <tr>
@@ -359,6 +369,21 @@ const FarmerDashboard = () => {
                   </tbody>
                 </table>
               </div>
+              
+              {/* Merged Payment History inside Incoming Orders */}
+              <div className="space-y-4">
+                <h3 className="text-xl font-black mb-6 mt-8">Completed Payments History</h3>
+                {transactions.length > 0 ? (
+                  transactions.map((tx, i) => (
+                    <HistoryCard key={i} transaction={tx} />
+                  ))
+                ) : (
+                  <p className="text-center py-10 text-gray-400 font-bold bg-white rounded-3xl border border-dashed">
+                      No payment history yet.
+                  </p>
+                )}
+              </div>
+            </div>
             )}
 
             {activeTab === 'Vendor Requests' && (

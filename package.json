@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "frontend": "npm run dev",
-    "backend": "py Backend\\manage.py runserver",
+    "backend": "python ../Backend/manage.py runserver",
     "kishan": "concurrently \"npm run frontend\" \"npm run backend\" "
   },
   "dependencies": {
