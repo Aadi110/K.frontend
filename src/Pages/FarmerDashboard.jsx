@@ -6,7 +6,7 @@ import marketplaceDefaultImage from '../assets/marketplace/marketplace-default.s
 import { 
   LayoutDashboard, ShoppingBasket, PlusCircle, 
   ShoppingCart, MessageSquare, IndianRupee, 
-  BarChart3, Settings, Bell, Search, Trash2, Send, LogOut, History 
+  BarChart3, Settings, Bell, Search, Trash2, Send, LogOut, History, MapPin, User, Phone, Mail, Save 
 } from 'lucide-react';
 import HistoryCard from '../Components/HistoryCard';
 
@@ -123,6 +123,38 @@ const FarmerDashboard = () => {
     navigate("/login");
   };
 
+  // --- PROFILE PANEL ---
+  const [profileData, setProfileData] = useState({
+    fullname: localStorage.getItem("userName") || "",
+    email: localStorage.getItem("userEmail") || "",
+    address: localStorage.getItem("userAddress") || "",
+    phone: localStorage.getItem("userPhone") || "",
+  });
+  const [profileMsg, setProfileMsg] = useState("");
+
+  const handleProfileUpdate = async (e) => {
+    e.preventDefault();
+    setProfileMsg("");
+    try {
+      const res = await fetch(`${API_BASE}/api/accounts/update-profile/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(profileData)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        if (data.name) localStorage.setItem("userName", data.name);
+        if (data.address) localStorage.setItem("userAddress", data.address);
+        if (data.phone) localStorage.setItem("userPhone", data.phone);
+        setProfileMsg("Profile updated successfully!");
+      } else {
+        setProfileMsg(data.error || "Update failed.");
+      }
+    } catch (err) {
+      setProfileMsg("Could not reach server.");
+    }
+  };
+
   // --- ACCEPT REQUEST LOGIC (FIXED) ---
   const handleAcceptRequest = async (request) => {
     const requestId = request.id || request._id;
@@ -232,13 +264,13 @@ const FarmerDashboard = () => {
         </div>
         
         <div className="flex flex-col gap-4 pt-6 border-t border-gray-100">
-          <div className="flex items-center gap-3 px-2">
-            <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 font-bold uppercase">{userName[0]}</div>
+          <button onClick={() => setActiveTab('Profile')} className="flex items-center gap-3 px-2 w-full text-left rounded-xl hover:bg-green-50 py-2 transition-all cursor-pointer group">
+            <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 font-bold uppercase group-hover:scale-105 transition-transform">{userName[0]}</div>
             <div>
               <p className="text-sm font-black">{userName}</p>
-              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">Farmer Partner</p>
+              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">Farmer Partner · Edit Profile</p>
             </div>
-          </div>
+          </button>
           
           <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm text-red-500 hover:bg-red-50 transition-all group">
             <LogOut size={20} className="group-hover:-translate-x-1 transition-transform" />
@@ -443,6 +475,58 @@ const FarmerDashboard = () => {
                    </button>
                  </form>
                </div>
+            )}
+
+            {activeTab === 'Profile' && (
+              <div className="max-w-2xl mx-auto">
+                <div className="bg-white p-10 rounded-[2.5rem] border border-gray-100 shadow-sm">
+                  <div className="flex items-center gap-4 mb-8">
+                    <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center text-green-600 font-black text-2xl uppercase">{profileData.fullname[0]}</div>
+                    <div>
+                      <h2 className="text-2xl font-black text-gray-900">My Profile</h2>
+                      <p className="text-gray-400 text-sm font-bold">Update your personal information</p>
+                    </div>
+                  </div>
+                  {profileMsg && <p className={`text-sm font-bold mb-4 px-4 py-3 rounded-xl ${profileMsg.includes('success') ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'}`}>{profileMsg}</p>}
+                  <form onSubmit={handleProfileUpdate} className="space-y-5">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1">Full Name</label>
+                      <div className="relative">
+                        <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={16} />
+                        <input type="text" className="w-full pl-12 pr-4 py-4 bg-gray-50 rounded-xl outline-none font-bold text-sm focus:ring-2 focus:ring-green-500/20 transition-all" 
+                          value={profileData.fullname} onChange={e => setProfileData({...profileData, fullname: e.target.value})} required />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1">{localStorage.getItem('userEmail') ? 'Email (read-only)' : 'Email (Required)'}</label>
+                      <div className="relative">
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={16} />
+                        <input type="email" className={`w-full pl-12 pr-4 py-4 rounded-xl outline-none font-bold text-sm transition-all ${localStorage.getItem('userEmail') ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-gray-50 focus:ring-2 focus:ring-green-500/20'}`} 
+                          value={profileData.email} onChange={e => setProfileData({...profileData, email: e.target.value})} readOnly={!!localStorage.getItem('userEmail')} required />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1">Address / Farm Location</label>
+                      <div className="relative">
+                        <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={16} />
+                        <input type="text" className="w-full pl-12 pr-4 py-4 bg-gray-50 rounded-xl outline-none font-bold text-sm focus:ring-2 focus:ring-green-500/20 transition-all" 
+                          value={profileData.address} onChange={e => setProfileData({...profileData, address: e.target.value})} />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1">Phone Number</label>
+                      <div className="relative">
+                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={16} />
+                        <input type="tel" placeholder="+977-98XXXXXXXX" className="w-full pl-12 pr-4 py-4 bg-gray-50 rounded-xl outline-none font-bold text-sm focus:ring-2 focus:ring-green-500/20 transition-all" 
+                          value={profileData.phone} onChange={e => setProfileData({...profileData, phone: e.target.value})} />
+                      </div>
+                    </div>
+                    <button type="submit" className="w-full py-4 bg-green-500 text-white font-black rounded-xl shadow-lg shadow-green-100 hover:bg-green-600 transition-all flex items-center justify-center gap-2">
+                      <Save size={18} /> Save Changes
+                    </button>
+                  </form>
+                </div>
+              </div>
             )}
 
           </motion.div>
