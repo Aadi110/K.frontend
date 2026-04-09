@@ -57,10 +57,10 @@ const VendorDashboard = () => {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get("payment_success") === "true") {
-       const payloadStr = urlParams.get("payload");
-       if (payloadStr) {
+       const storedData = localStorage.getItem("pending_esewa_order");
+       if (storedData) {
            try {
-               const pData = JSON.parse(atob(payloadStr));
+               const pData = JSON.parse(storedData);
                
                // Create the Order as automatically Shipped
                const newOrder = {
@@ -85,6 +85,7 @@ const VendorDashboard = () => {
                });
                
                alert(`Payment Successful! Your order for ${pData.name} has been processed and automatically marked as Shipped.`);
+               localStorage.removeItem("pending_esewa_order");
                
                // Clean up URL
                window.history.replaceState({}, document.title, window.location.pathname);
@@ -161,7 +162,7 @@ const VendorDashboard = () => {
       if (!res.ok) throw new Error("Payment initiation failed");
       const data = await res.json();
 
-      // Bundle product data into the success URL so we can save the order exactly upon successful redirect!
+      // Store product data in localStorage so we can save the order exactly upon successful redirect!
       const successData = {
           name: selectedProduct.name,
           price: selectedProduct.price,
@@ -171,14 +172,15 @@ const VendorDashboard = () => {
           amount: amount
       };
       
+      localStorage.setItem("pending_esewa_order", JSON.stringify(successData));
+      
       const successUrl = new URL(window.location.origin + window.location.pathname);
       successUrl.searchParams.set("payment_success", "true");
-      successUrl.searchParams.set("payload", btoa(JSON.stringify(successData)));
 
-      // Build eSewa Form (Test Environment)
+      // Build eSewa Form
       const form = document.createElement("form");
       form.setAttribute("method", "POST");
-      form.setAttribute("action", "https://rc-epay.esewa.com.np/api/epay/main/v2/form");
+      form.setAttribute("action", data.esewa_url || "https://rc-epay.esewa.com.np/api/epay/main/v2/form");
       
       const params = {
           "amount": data.amount,
